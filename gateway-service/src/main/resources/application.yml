@@ -1,0 +1,41 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: gateway-service
+
+  main:
+    allow-bean-definition-overriding: true
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.150.90.83:8848,10.150.90.83:8847,10.150.90.83:8849
+      config:
+        server-addr: 10.150.90.83:8848,10.150.90.83:8847,10.150.90.83:8849
+        file-extension: yaml
+
+    gateway:
+      discovery:
+        locator:
+          enabled: true # gateway 可以从 nacos 发现服务，过 gateway 调用其它服务
+      routes:
+        - id: user-service-route # 自己命名，唯一
+          uri: lb://user-service # 对应 user-service 的 spring.application.name
+          predicates:
+            - Path=/** # to do
+          filters:
+            - StripPrefix=1 #使用过滤器
+
+        - id: oauth2-service-route # 自己命名，唯一
+          uri: lb://oauth2-service # 对应 user-service 的 spring.application.name
+          predicates:
+            - Path=/** # to do
+          filters:
+            - StripPrefix=1 #使用过滤器
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/oauth?serverTimezone=UTC&useSSL=false
+#    username: root
+#    password: vimicro

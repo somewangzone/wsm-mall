@@ -26,7 +26,7 @@ public class UserRegisterLoginController {
     public CommonResponse phoneCodeRegister(@RequestParam String phoneNumber,
                                             @RequestParam String code) {
 
-        return userRegisterLoginService.phoneCodeRegister(phoneNumber,code);
+        return userRegisterLoginService.phoneCodeRegister(phoneNumber, code);
     }
 
     // 第三方授权，gitee
@@ -35,5 +35,12 @@ public class UserRegisterLoginController {
     public CommonResponse thirdPartGiteeCallback(HttpServletRequest request) {
 
         return userRegisterLoginService.thirdPartGiteeCallback(request);
+    }
+
+    @RequestMapping("/login")
+    public CommonResponse login(@RequestParam String userName,
+                                @RequestParam String password) {
+
+        return userRegisterLoginService.login(userName, password);
     }
 }

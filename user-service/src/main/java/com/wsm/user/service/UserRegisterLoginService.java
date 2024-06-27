@@ -81,7 +81,7 @@ public class UserRegisterLoginService {
             //end 事务
 
             String personId = String.valueOf(uid + 10000000);
-            redisCommonProcessor.set(personId, user);
+            redisCommonProcessor.setExpiredDays(personId, user, 30);
 
             // return user信息 + token 信息给前端
             // 查询语句，执行这个代码的时候，事务还没有commit，而我们的DB用的是 rr 模式，读取不到未 commit 的新数据
@@ -129,10 +129,10 @@ public class UserRegisterLoginService {
 
             Integer uid = this.saveUerAndOauthClient(user, oauth2Client);
             String personId = String.valueOf(uid + 10000000);
-            redisCommonProcessor.set(personId, user);
-        }else{
+            redisCommonProcessor.setExpiredDays(personId, user, 30);
+        } else {
             // 有可能 token 已经过期了，需要更新一下密码
-            oauthClientRepository.updateSecretByClientId(encodePassword,phoneNumber);
+            oauthClientRepository.updateSecretByClientId(encodePassword, phoneNumber);
         }
         Map oauth2ClientMap = generateOauthToken(AuthGrantType.client_credentials, null, null,
                 phoneNumber, code);
@@ -149,14 +149,14 @@ public class UserRegisterLoginService {
             throw new UnsupportedOperationException("Invalid state!");
         }*/
         String tokenUrl = String.format(giteeConfig.getTokenUrl(),
-                giteeConfig.getClientId(),giteeConfig.getClientSecret(),
+                giteeConfig.getClientId(), giteeConfig.getClientSecret(),
                 giteeConfig.getCallBack(), code);
 
         JSONObject tokenObject = outerRestTemplate.postForObject(tokenUrl, null, JSONObject.class);
         String token = String.valueOf(tokenObject.get("access_token"));
 
-        String userUrl = String.format(giteeConfig.getUserUrl(),token);
-        JSONObject userObject = outerRestTemplate.getForObject(userUrl,JSONObject.class);
+        String userUrl = String.format(giteeConfig.getUserUrl(), token);
+        JSONObject userObject = outerRestTemplate.getForObject(userUrl, JSONObject.class);
 
         String userName = giteeConfig.getState().concat(String.valueOf(userObject.get("name")));
 
@@ -164,7 +164,7 @@ public class UserRegisterLoginService {
         String encodePassword = bCryptPasswordEncoder.encode(userName);
 
         User user = userRepository.findByUserName(userName);
-        if(null == user){
+        if (null == user) {
             user = User.builder()
                     .userName(userName)
                     .passwd(encodePassword)
@@ -183,7 +183,7 @@ public class UserRegisterLoginService {
 
             Integer uid = this.saveUerAndOauthClient(user, oauth2Client);
             String personId = String.valueOf(uid + 10000000);
-            redisCommonProcessor.set(personId, user);
+            redisCommonProcessor.setExpiredDays(personId, user, 30);
         }
 
         Map oauth2ClientMap = generateOauthToken(AuthGrantType.client_credentials, null, null,
@@ -245,5 +245,18 @@ public class UserRegisterLoginService {
                 new HttpEntity<>(params, headers);
 
         return innerRestTemplate.postForObject("http://oauth2-service/oauth/token", httpEntity, Map.class);
+    }
+
+    public CommonResponse login(String userName, String password) {
+        User user = userRepository.findByUserName(userName);
+        if (null == user) {
+            return ResponseUtils.failResponse(ResponseCode.BAD_REQUEST.getCode(), null, "User not exist!");
+        }
+        Map content = formatResponseContent(user,
+                generateOauthToken(AuthGrantType.password, userName, password, userName, password));
+
+        String personId = user.getId() + "1000000";
+        redisCommonProcessor.setExpiredDays(personId, user, 30);
+        return ResponseUtils.okResponse(content);
     }
 }

@@ -38,6 +38,17 @@ public class RedisCommonProcessor {
         }
     }
 
+    public void setExpiredDays(String key, Object value, Integer days) {
+        if (null == key) {
+            throw new UnsupportedOperationException("key should not be null");
+        }
+        if (days > 0) {
+            redisTemplate.opsForValue().set(key, value, days, TimeUnit.DAYS);
+        } else {
+            set(key, value);
+        }
+    }
+
     public void remove(String key) {
         if (null == key) {
             throw new UnsupportedOperationException("key should not be null");

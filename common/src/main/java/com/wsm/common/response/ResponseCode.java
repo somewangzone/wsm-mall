@@ -2,8 +2,8 @@ package com.wsm.common.response;
 
 public enum ResponseCode {
     SUCCESS(200,"Request Successfully!"),
-    BAD_REQUEST(400,"bad request"),
-    UNAUTHORIZED(401,"unauthorized");
+    BAD_REQUEST(400,"Bad request"),
+    UNAUTHORIZED(401,"Unauthorized");
 
     private final Integer code;
     private final String message;

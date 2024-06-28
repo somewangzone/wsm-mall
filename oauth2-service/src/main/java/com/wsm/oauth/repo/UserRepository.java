@@ -1,6 +1,6 @@
 package com.wsm.oauth.repo;
 
-import com.wsm.oauth.entity.User;
+import com.wsm.oauth.pojo.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

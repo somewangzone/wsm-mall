@@ -1,0 +1,38 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: canal-service
+
+  main:
+    allow-bean-definition-overriding: true
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 10.150.90.83:8848,10.150.90.83:8847,10.150.90.83:8849
+      config:
+        server-addr: 10.150.90.83:8848,10.150.90.83:8847,10.150.90.83:8849
+        file-extension: yaml
+
+  redis:
+    host: 10.150.90.236
+    port: 16379
+    password: myredis
+    database: 7
+    timeout: 10s
+    lettuce:
+      pool:
+        max-active: 50
+        max-idle: 50
+        max-wait: -1ms
+        min-idle: 0
+
+  kafka:
+    consumer:
+      bootstrap-servers: 10.150.90.236:9092,10.150.90.237:9093
+      group-id: canal-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

@@ -1,4 +1,4 @@
-package com.wsm.oauth.entity;
+package com.wsm.oauth.pojo;
 
 import lombok.Data;
 

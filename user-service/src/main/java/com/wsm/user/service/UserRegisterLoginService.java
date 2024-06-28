@@ -5,11 +5,9 @@ import com.wsm.common.response.CommonResponse;
 import com.wsm.common.response.ResponseCode;
 import com.wsm.common.response.ResponseUtils;
 import com.wsm.user.config.GiteeConfig;
-import com.wsm.user.pojo.AuthGrantType;
-import com.wsm.user.pojo.Oauth2Client;
-import com.wsm.user.pojo.RegisterType;
-import com.wsm.user.pojo.User;
+import com.wsm.user.pojo.*;
 import com.wsm.user.processor.RedisCommonProcessor;
+import com.wsm.user.repo.OauthClientRegisterRepository;
 import com.wsm.user.repo.OauthClientRepository;
 import com.wsm.user.repo.UserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +20,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -30,7 +30,9 @@ import org.springframework.web.client.RestTemplate;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class UserRegisterLoginService {
@@ -55,6 +57,9 @@ public class UserRegisterLoginService {
 
     @Autowired
     private GiteeConfig giteeConfig;
+
+    @Autowired
+    private OauthClientRegisterRepository oauthClientRegisterRepository;
 
     // 如果当前存在事务，就加入该事务，不存在就新建事务
     //@Transactional(propagation = Propagation.REQUIRED)
@@ -258,5 +263,47 @@ public class UserRegisterLoginService {
         String personId = user.getId() + "1000000";
         redisCommonProcessor.setExpiredDays(personId, user, 30);
         return ResponseUtils.okResponse(content);
+    }
+
+    public CommonResponse thirdPartAppRequest(String personId, Ouath2ClientRegister ouath2ClientRegister) {
+        Integer userId = Integer.valueOf(personId) - 1000000;
+        ouath2ClientRegister.setClientId(UUID.randomUUID().toString().replaceAll("-", ""));
+        ouath2ClientRegister.setClientSecret(UUID.randomUUID().toString().replaceAll("-", ""));
+        ouath2ClientRegister.setAppLogo(0);
+        ouath2ClientRegister.setUserId(userId);
+
+        this.oauthClientRegisterRepository.save(ouath2ClientRegister);
+
+        return ResponseUtils.okResponse(null);
+    }
+
+    public CommonResponse checkThirdPartAppRequestStatus(String personId) {
+        Integer userId = Integer.valueOf(personId) - 1000000;
+        List<Ouath2ClientRegister> userRequestInfo = this.oauthClientRegisterRepository.findByUserId(userId);
+
+        return ResponseUtils.okResponse(userRequestInfo);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CommonResponse checkThirdPartAppRequestApprove(String appName) {
+        Ouath2ClientRegister ouath2ClientRegister = this.oauthClientRegisterRepository.findByAppName(appName);
+
+        this.oauthClientRegisterRepository.updateRegisterClientByAppName(appName);
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        String encodeClientSecret = bCryptPasswordEncoder.encode(ouath2ClientRegister.getClientSecret());
+
+        Oauth2Client oauth2Client = Oauth2Client.builder()
+                .clientId(ouath2ClientRegister.getClientId())
+                .clientSecret(encodeClientSecret)
+                .resourceIds(appName)
+                .scope("web")
+                .redirectUrl(ouath2ClientRegister.getAppCallbackUrl())
+                .authorities(appName)
+                .autoApprove("true")
+                .authorizedGrantTypes(AuthGrantType.refresh_token.name().concat(",").concat(AuthGrantType.authorization_code.name()))
+                .build();
+        this.oauthClientRepository.save(oauth2Client);
+
+        return ResponseUtils.okResponse(null);
     }
 }

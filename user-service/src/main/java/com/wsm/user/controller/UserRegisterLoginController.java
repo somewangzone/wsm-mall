@@ -1,6 +1,7 @@
 package com.wsm.user.controller;
 
 import com.wsm.common.response.CommonResponse;
+import com.wsm.user.pojo.Ouath2ClientRegister;
 import com.wsm.user.pojo.User;
 import com.wsm.user.service.UserRegisterLoginService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,5 +43,27 @@ public class UserRegisterLoginController {
                                 @RequestParam String password) {
 
         return userRegisterLoginService.login(userName, password);
+    }
+
+    @RequestMapping("/third-part-app/request")
+    public CommonResponse thirdPartAppRequest(
+            @RequestHeader String personId,
+            @RequestBody Ouath2ClientRegister ouath2ClientRegister) {
+        return userRegisterLoginService.thirdPartAppRequest(personId, ouath2ClientRegister);
+    }
+
+    @RequestMapping("/third-part-app/request/status")
+    public CommonResponse checkThirdPartAppRequestStatus(
+            @RequestHeader String personId) {
+
+        return userRegisterLoginService.checkThirdPartAppRequestStatus(personId);
+    }
+
+    @RequestMapping("/third-part-app/request/approve")
+    public CommonResponse checkThirdPartAppRequestApprove(
+            @RequestHeader String personId,
+            @RequestParam String appName) {
+
+        return userRegisterLoginService.checkThirdPartAppRequestApprove(appName);
     }
 }

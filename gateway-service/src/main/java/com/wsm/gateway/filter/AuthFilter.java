@@ -52,8 +52,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
         // 给微服务转发请求的时候带上一些header
         ServerHttpRequest httpRequest = request.mutate().headers(httpHeaders -> {
-            httpHeaders.set("personId", "abc");
-            httpHeaders.set("tracingId", "123");
+            httpHeaders.set("personId", request.getHeaders().getFirst("personId"));
+            // httpHeaders.set("tracingId", "123");
         }).build();
 
         exchange.mutate().request(httpRequest);

@@ -1,6 +1,6 @@
 package com.wsm.oauth.service;
 
-import com.wsm.oauth.entity.User;
+import com.wsm.oauth.pojo.User;
 import com.wsm.oauth.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.AuthorityUtils;
